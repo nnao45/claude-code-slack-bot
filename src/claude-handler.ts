@@ -1,4 +1,4 @@
-import { query, type SDKMessage } from '@anthropic-ai/claude-code';
+import {Options, query, type SDKMessage} from '@anthropic-ai/claude-code';
 import { ConversationSession } from './types';
 import { Logger } from './logger';
 import { McpManager, McpServerConfig } from './mcp-manager';
@@ -39,10 +39,13 @@ export class ClaudeHandler {
     workingDirectory?: string,
     slackContext?: { channel: string; threadTs?: string; user: string }
   ): AsyncGenerator<SDKMessage, void, unknown> {
+    const appendSystemPrompt = process.env.CLAUDE_CODE_APPEND_SYSTEM_PROMPT
+    const  permissionMode = process.env.BYPASS_PERMISSIONS === 'true' ? 'bypassPermissions': 'default';
     const options: any = {
+      appendSystemPrompt: appendSystemPrompt,
       outputFormat: 'stream-json',
-      permissionMode: slackContext ? 'default' : 'bypassPermissions',
-    };
+      permissionMode: permissionMode,
+    } as Options;
 
     // Add permission prompt tool if we have Slack context
     if (slackContext) {
@@ -62,7 +65,7 @@ export class ClaudeHandler {
       const permissionServer = {
         'permission-prompt': {
           command: 'npx',
-          args: ['tsx', '/Users/marcelpociot/Experiments/claude-code-slack/src/permission-mcp-server.ts'],
+          args: ['tsx', '/home/nnao45/ghq/github.com/mpociot/claude-code-slack-bot/src/permission-mcp-server.ts'],
           env: {
             SLACK_BOT_TOKEN: process.env.SLACK_BOT_TOKEN,
             SLACK_CONTEXT: JSON.stringify(slackContext)
